@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Magazzino</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-4">
+
+    <h1 class="mb-4">Magazzino</h1>
+
+    <!-- Prodotti -->
+    <h2>Prodotti</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>SKU</th>
+                <th>Nome</th>
+                <th>Quantità</th>
+                <th>Elimina</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for p in products %}
+            <tr class="{% if p.quantity < 5 %}table-danger{% endif %}">
+                <td>{{ p.sku }}</td>
+                <td>{{ p.name }}</td>
+                <td>{{ p.quantity }}</td>
+                <td>
+                    <form action="/delete/{{ p.sku }}" method="post">
+                        <button type="submit" class="btn btn-danger btn-sm">Elimina</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Aggiungi prodotto -->
+    <h2>Aggiungi prodotto</h2>
+    <form action="/add_product" method="post" class="row g-3 mb-4">
+        <div class="col-md-2">
+            <input type="text" name="sku" class="form-control" placeholder="SKU" required>
+        </div>
+        <div class="col-md-4">
+            <input type="text" name="name" class="form-control" placeholder="Nome" required>
+        </div>
+        <div class="col-md-2">
+            <input type="number" name="quantity" class="form-control" min="1" placeholder="Quantità" required>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary">Aggiungi</button>
+        </div>
+    </form>
+
+    <!-- Crea kit -->
+    <h2>Crea kit</h2>
+    <form action="/create_kit" method="post" class="row g-3 mb-4">
+        <div class="col-md-3">
+            <input type="text" name="kit_name" class="form-control" placeholder="Nome kit" required>
+        </div>
+        <div class="col-md-5">
+            <input type="text" name="kit_skus" class="form-control" placeholder="Prodotti SKU separati da virgola" required>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-success">Crea kit</button>
+        </div>
+    </form>
+
+    <!-- Kit creati -->
+    <h2>Kit creati</h2>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Nome Kit</th>
+                <th>Prodotti</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for k in kits %}
+            <tr>
+                <td>{{ k.name }}</td>
+                <td>{{ ", ".join(k.skus) }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+</body>
+</html>
