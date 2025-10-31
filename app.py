@@ -107,8 +107,27 @@ def ordini():
     conn = get_db_connection()
     prodotti = conn.execute("SELECT * FROM Prodotti WHERE quantita_pieni>0").fetchall()
     clienti = conn.execute("SELECT * FROM Clienti").fetchall()
+
+    # Recupera gli ordini già creati con dettagli
+    ordini_list = conn.execute("""
+        SELECT o.id, c.nome AS cliente, o.data, o.totale
+        FROM Ordini o
+        JOIN Clienti c ON o.cliente_id = c.id
+        ORDER BY o.id DESC
+    """).fetchall()
+
+    ordini_dettagli = {}
+    for o in ordini_list:
+        dettagli = conn.execute("""
+            SELECT p.nome, d.quantita, d.prezzo_unitario
+            FROM DettaglioOrdini d
+            JOIN Prodotti p ON d.prodotto_id = p.id
+            WHERE d.ordine_id = ?
+        """, (o['id'],)).fetchall()
+        ordini_dettagli[o['id']] = dettagli
+
     conn.close()
-    return render_template('ordini.html', prodotti=prodotti, clienti=clienti)
+    return render_template('ordini.html', prodotti=prodotti, clienti=clienti, ordini=ordini_list, dettagli=ordini_dettagli)
 
 @app.route('/crea_ordine', methods=['POST'])
 def crea_ordine():

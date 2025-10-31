@@ -1,25 +1,41 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Ordini</title>
-</head>
-<body>
-<h1>Nuovo Ordine</h1>
-<form action="/crea_ordine" method="POST">
+<h2>Nuovo Ordine</h2>
+
+<form method="POST" action="/crea_ordine">
     Cliente: <input type="text" name="cliente" required><br><br>
+
     <table border="1">
-        <tr><th>Prodotto</th><th>Disponibili</th><th>Quantità</th><th>Prezzo</th></tr>
+        <tr>
+            <th>Prodotto</th>
+            <th>Disponibili</th>
+            <th>Quantità</th>
+            <th>Prezzo</th>
+        </tr>
         {% for prod in prodotti %}
         <tr>
             <td>{{ prod.nome }}</td>
             <td>{{ prod.quantita_pieni }}</td>
-            <td><input type="number" name="prod_{{ prod.id }}" min="0" max="{{ prod.quantita_pieni }}" value="0"></td>
-            <td><input type="number" name="prezzo_{{ prod.id }}" step="0.01" required></td>
+            <td><input type="number" name="prod_{{ prod.id }}" min="0" max="{{ prod.quantita_pieni }}"></td>
+            <td><input type="number" name="prezzo_{{ prod.id }}" step="0.01" min="0"></td>
         </tr>
         {% endfor %}
     </table>
+
     <button type="submit">Crea Ordine</button>
 </form>
+
+<br>
 <a href="/">Torna all'inventario</a>
-</body>
-</html>
+
+<h3>Ordini recenti</h3>
+{% for ordine in ordini %}
+    <div style="border:1px solid #000; padding:10px; margin-bottom:10px;">
+        <strong>Cliente:</strong> {{ ordine.cliente }} |
+        <strong>Data:</strong> {{ ordine.data }} |
+        <strong>Totale:</strong> {{ ordine.totale }}
+        <ul>
+            {% for item in dettagli[ordine.id] %}
+                <li>{{ item.nome }} - Quantità: {{ item.quantita }} - Prezzo unitario: {{ item.prezzo_unitario }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endfor %}
