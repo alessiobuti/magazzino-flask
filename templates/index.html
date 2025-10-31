@@ -1,34 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Inventario</title>
+    <title>Inventario Magazzino</title>
 </head>
 <body>
-    <h1>Inventario Prodotti</h1>
-    <form action="/aggiungi" method="POST">
-        Nome: <input type="text" name="nome" required>
-        Pieni: <input type="number" name="pieni" required>
-        Vuoti: <input type="number" name="vuoti" required>
-        <button type="submit">Aggiungi</button>
-    </form>
-    <table border="1">
-        <tr><th>ID</th><th>Nome</th><th>Pieni</th><th>Vuoti</th><th>Azioni</th></tr>
-        {% for prod in prodotti %}
-        <tr>
-            <td>{{ prod.id }}</td>
-            <td>{{ prod.nome }}</td>
-            <td>{{ prod.quantita_pieni }}</td>
-            <td>{{ prod.quantita_vuoti }}</td>
-            <td>
-                <form action="/modifica/{{ prod.id }}" method="POST" style="display:inline">
-                    <input type="number" name="pieni" value="{{ prod.quantita_pieni }}" required>
-                    <input type="number" name="vuoti" value="{{ prod.quantita_vuoti }}" required>
-                    <button type="submit">Modifica</button>
-                </form>
-                <a href="/elimina/{{ prod.id }}">Elimina</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
+<h1>Inventario Prodotti</h1>
+
+<!-- Form per aggiungere un nuovo prodotto -->
+<h2>Aggiungi Prodotto</h2>
+<form action="/aggiungi_prodotto" method="POST">
+    Nome: <input type="text" name="nome" required>
+    Pieni: <input type="number" name="pieni" min="0" value="0" required>
+    Vuoti: <input type="number" name="vuoti" min="0" value="0" required>
+    <button type="submit">Aggiungi</button>
+</form>
+
+<hr>
+
+<!-- Lista prodotti -->
+<h2>Prodotti in Magazzino</h2>
+<table border="1">
+    <tr>
+        <th>Nome</th>
+        <th>Pieni</th>
+        <th>Vuoti</th>
+        <th>Azioni</th>
+    </tr>
+    {% for item in prodotti %}
+    <tr>
+        <td>{{ item.nome }}</td>
+        <td>{{ item.quantita_pieni }}</td>
+        <td>{{ item.quantita_vuoti }}</td>
+        <td>
+            <!-- Modifica quantità -->
+            <form action="/modifica_prodotto/{{ item.id }}" method="POST" style="display:inline;">
+                Pieni: <input type="number" name="pieni" min="0" value="{{ item.quantita_pieni }}" required>
+                Vuoti: <input type="number" name="vuoti" min="0" value="{{ item.quantita_vuoti }}" required>
+                <button type="submit">Aggiorna</button>
+            </form>
+            <!-- Elimina prodotto -->
+            <a href="/elimina_prodotto/{{ item.id }}" onclick="return confirm('Sei sicuro di voler eliminare questo prodotto?');">Elimina</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<hr>
+
+<a href="/ordini">Vai alla gestione ordini</a> | <a href="/report">Vai ai report vendite</a>
+
 </body>
 </html>
