@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ordini</title>
+</head>
+<body>
+<h1>Nuovo Ordine</h1>
+<form action="/crea_ordine" method="POST">
+    Cliente: <input type="text" name="cliente" required><br><br>
+    <table border="1">
+        <tr><th>Prodotto</th><th>Disponibili</th><th>Quantità</th><th>Prezzo</th></tr>
+        {% for prod in prodotti %}
+        <tr>
+            <td>{{ prod.nome }}</td>
+            <td>{{ prod.quantita_pieni }}</td>
+            <td><input type="number" name="prod_{{ prod.id }}" min="0" max="{{ prod.quantita_pieni }}" value="0"></td>
+            <td><input type="number" name="prezzo_{{ prod.id }}" step="0.01" required></td>
+        </tr>
+        {% endfor %}
+    </table>
+    <button type="submit">Crea Ordine</button>
+</form>
+<a href="/">Torna all'inventario</a>
+</body>
+</html>

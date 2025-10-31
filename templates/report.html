@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Report Vendite</title>
+</head>
+<body>
+<h1>Report Vendite</h1>
+
+<form method="get" action="/report">
+    Mese (MM): <input type="text" name="mese" value="{{ mese or '' }}">
+    Anno (YYYY): <input type="text" name="anno" value="{{ anno or '' }}">
+    <button type="submit">Filtra</button>
+</form>
+
+<table border="1" style="margin-top:20px;">
+    <tr>
+        <th>Data</th>
+        <th>Totale (€)</th>
+    </tr>
+    {% for ordine in ordini %}
+    <tr>
+        <td>{{ ordine.data }}</td>
+        <td>{{ ordine.totale }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h3>Totale Vendite: {{ totale }}€</h3>
+
+<a href="/">Torna all'inventario</a> | <a href="/ordini">Gestione ordini</a>
+</body>
+</html>
