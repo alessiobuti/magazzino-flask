@@ -2,32 +2,29 @@ from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
 
-# Magazzino e kit
-prodotti = {}  # formato: {nome: {'quantita': x, 'costo': y}}
-kit = {}       # formato: {nome_persona: {'prodotti': [prodotti], 'quantita': x}}
+# Magazzino e ordini
+prodotti = {}  # struttura: {"nome": {"quantita": int, "prezzo": float}}
+ordini = {}    # struttura: {"nome_cliente": {"prodotti": [nomi], "quantita": int}}
 
-# Totale venduto
-valore_totale_venduto = 0
+# Valore totale venduto
+valore_totale_venduto = 0.0
 
 @app.route('/')
 def index():
     global valore_totale_venduto
-    # Calcola valore totale attuale
-    totale_magazzino = sum(prodotti[p]['quantita'] * prodotti[p]['costo'] for p in prodotti)
-    return render_template('index.html', prodotti=prodotti, kit=kit, valore_totale_venduto=totale_magazzino)
+    return render_template('index.html', prodotti=prodotti, ordini=ordini, valore_totale_venduto=valore_totale_venduto)
 
 # Aggiungi prodotto
 @app.route('/add_product', methods=['POST'])
 def add_product():
     nome = request.form['nome_prodotto']
     quantita = int(request.form['quantita_prodotto'])
-    costo = float(request.form['costo_prodotto'])
-    
+    prezzo = float(request.form['prezzo_prodotto'])
     if nome in prodotti:
         prodotti[nome]['quantita'] += quantita
-        prodotti[nome]['costo'] = costo  # aggiorna costo se cambiato
+        prodotti[nome]['prezzo'] = prezzo  # aggiorna il prezzo se cambia
     else:
-        prodotti[nome] = {'quantita': quantita, 'costo': costo}
+        prodotti[nome] = {'quantita': quantita, 'prezzo': prezzo}
     return redirect(url_for('index'))
 
 # Modifica quantità prodotto
@@ -44,37 +41,37 @@ def delete_product(nome):
         del prodotti[nome]
     return redirect(url_for('index'))
 
-# Aggiungi kit / prodotti ordinati
-@app.route('/add_kit', methods=['POST'])
-def add_kit():
-    nome_persona = request.form['nome_persona']
-    quantita = int(request.form['quantita'])
-    prodotti_inclusi = request.form.getlist('prodotti_kit')
+# Aggiungi ordine/kit
+@app.route('/add_order', methods=['POST'])
+def add_order():
+    global valore_totale_venduto
+    nome_cliente = request.form['nome_cliente']
+    quantita_ordini = int(request.form['quantita'])
+    prodotti_selezionati = request.form.getlist('prodotti_kit')  # lista di prodotti
 
     # Controllo disponibilità
-    for p in prodotti_inclusi:
-        if p not in prodotti or prodotti[p]['quantita'] < quantita:
+    for p in prodotti_selezionati:
+        if p not in prodotti or prodotti[p]['quantita'] < quantita_ordini:
             return f"Prodotto {p} non disponibile in quantità sufficiente."
 
-    # Aggiorna magazzino
-    for p in prodotti_inclusi:
-        prodotti[p]['quantita'] -= quantita
+    # Aggiorna magazzino e valore totale venduto
+    for p in prodotti_selezionati:
+        prodotti[p]['quantita'] -= quantita_ordini
+        valore_totale_venduto += prodotti[p]['prezzo'] * quantita_ordini
 
-    # Salva kit
-    kit[nome_persona] = {'prodotti': prodotti_inclusi, 'quantita': quantita}
+    # Salva ordine
+    ordini[nome_cliente] = {'prodotti': prodotti_selezionati, 'quantita': quantita_ordini}
     return redirect(url_for('index'))
 
-# Elimina kit / prodotti ordinati
-@app.route('/delete_kit/<nome_persona>')
-def delete_kit(nome_persona):
-    if nome_persona in kit:
-        # Restituisci prodotti al magazzino
-        for p in kit[nome_persona]['prodotti']:
-            if p in prodotti:
-                prodotti[p]['quantita'] += kit[nome_persona]['quantita']
-            else:
-                prodotti[p] = {'quantita': kit[nome_persona]['quantita'], 'costo': 0}
-        del kit[nome_persona]
+# Elimina ordine/kit
+@app.route('/delete_order/<nome_cliente>')
+def delete_order(nome_cliente):
+    if nome_cliente in ordini:
+        # Restituisci prodotti al magazzino e aggiorna il valore totale venduto
+        for p in ordini[nome_cliente]['prodotti']:
+            prodotti[p]['quantita'] += ordini[nome_cliente]['quantita']
+            valore_totale_venduto -= prodotti[p]['prezzo'] * ordini[nome_cliente]['quantita']
+        del ordini[nome_cliente]
     return redirect(url_for('index'))
 
 if __name__ == "__main__":

@@ -2,82 +2,161 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Magazzino</title>
+    <title>Gestione Magazzino</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        input[type="text"], input[type="number"] { padding: 5px; }
-        input[type="submit"] { padding: 5px 10px; }
-        h2 { margin-top: 40px; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f8;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #0077b6;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        h2 {
+            margin-top: 30px;
+            color: #023e8a;
+        }
+        .container {
+            width: 90%;
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #0077b6;
+            color: white;
+        }
+        form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        input[type=text], input[type=number], select {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            flex: 1;
+        }
+        input[type=submit] {
+            padding: 8px 16px;
+            border-radius: 5px;
+            border: none;
+            background-color: #023e8a;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        input[type=submit]:hover {
+            background-color: #03045e;
+        }
+        a {
+            text-decoration: none;
+            color: #d00000;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        select[multiple] {
+            height: 100px;
+        }
+        .valor-totale {
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+            color: #0077b6;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
-    <h1>Magazzino</h1>
+    <header>
+        <h1>Gestione Magazzino e Ordini</h1>
+    </header>
 
-    <h2>Prodotti/Kit</h2>
-    <form action="{{ url_for('add_product') }}" method="post">
-        <input type="text" name="nome_prodotto" placeholder="Nome prodotto" required>
-        <input type="number" name="quantita_prodotto" placeholder="Quantità" min="1" required>
-        <input type="number" name="costo_prodotto" placeholder="Costo" min="0" step="0.01" required>
-        <input type="submit" value="Aggiungi prodotto">
-    </form>
+    <div class="container">
+        <h2>==**Prodotti**==</h2>
+        <form action="/add_product" method="POST">
+            <input type="text" name="nome_prodotto" placeholder="Nome prodotto" required>
+            <input type="number" name="quantita_prodotto" placeholder="Quantità" min="1" required>
+            <input type="number" step="0.01" name="prezzo_prodotto" placeholder="Prezzo" min="0" required>
+            <input type="submit" value="Aggiungi prodotto">
+        </form>
 
-    <table>
-        <tr>
-            <th>Nome</th>
-            <th>Quantità</th>
-            <th>Costo</th>
-            <th>Modifica</th>
-            <th>Elimina</th>
-        </tr>
-        {% for nome, info in prodotti.items() %}
-        <tr>
-            <td>{{ nome }}</td>
-            <td>{{ info['quantita'] }}</td>
-            <td>{{ info['costo'] }} €</td>
-            <td>
-                <form action="{{ url_for('update_product', nome=nome) }}" method="post">
-                    <input type="number" name="nuova_quantita" value="{{ info['quantita'] }}" min="0">
-                    <input type="submit" value="Aggiorna">
-                </form>
-            </td>
-            <td><a href="{{ url_for('delete_product', nome=nome) }}">Elimina</a></td>
-        </tr>
-        {% endfor %}
-    </table>
-
-    <h2>Prodotti ordinati/da vendere</h2>
-    <form action="{{ url_for('add_kit') }}" method="post">
-        <input type="text" name="nome_persona" placeholder="Nome cliente" required>
-        <select name="prodotti_kit" multiple required>
-            {% for nome in prodotti %}
-            <option value="{{ nome }}">{{ nome }}</option>
+        <table>
+            <tr>
+                <th>Nome</th>
+                <th>Quantità</th>
+                <th>Prezzo</th>
+                <th>Modifica</th>
+                <th>Elimina</th>
+            </tr>
+            {% for nome, info in prodotti.items() %}
+            <tr>
+                <td>{{ nome }}</td>
+                <td>{{ info['quantita'] }}</td>
+                <td>{{ info['prezzo'] }} €</td>
+                <td>
+                    <form action="/update_product/{{ nome }}" method="POST">
+                        <input type="number" name="nuova_quantita" min="0" required>
+                        <input type="submit" value="Aggiorna">
+                    </form>
+                </td>
+                <td><a href="/delete_product/{{ nome }}">Elimina</a></td>
+            </tr>
             {% endfor %}
-        </select>
-        <input type="number" name="quantita" placeholder="Quantità" min="1" required>
-        <input type="submit" value="Crea prodotto/kit">
-    </form>
+        </table>
 
-    <table>
-        <tr>
-            <th>Cliente/Kit</th>
-            <th>Prodotti</th>
-            <th>Quantità</th>
-            <th>Elimina</th>
-        </tr>
-        {% for nome, info in kit.items() %}
-        <tr>
-            <td>{{ nome }}</td>
-            <td>{{ info['prodotti']|join(', ') }}</td>
-            <td>{{ info['quantita'] }}</td>
-            <td><a href="{{ url_for('delete_kit', nome_persona=nome) }}">Elimina</a></td>
-        </tr>
-        {% endfor %}
-    </table>
+        <h2>==**Prodotti Ordinati / Da Vendere**==</h2>
+        <form action="/add_order" method="POST">
+            <input type="text" name="nome_cliente" placeholder="Nome cliente" required>
+            <input type="number" name="quantita" placeholder="Quantità" min="1" required>
+            <select name="prodotti_kit" multiple required>
+                {% for nome in prodotti.keys() %}
+                <option value="{{ nome }}">{{ nome }}</option>
+                {% endfor %}
+            </select>
+            <input type="submit" value="Aggiungi ordine">
+        </form>
 
-    <h2>Valore totale prodotti in magazzino: {{ valore_totale_venduto }} €</h2>
+        <table>
+            <tr>
+                <th>Cliente</th>
+                <th>Prodotti</th>
+                <th>Quantità</th>
+                <th>Elimina</th>
+            </tr>
+            {% for cliente, info in ordini.items() %}
+            <tr>
+                <td>{{ cliente }}</td>
+                <td>{{ info['prodotti'] | join(', ') }}</td>
+                <td>{{ info['quantita'] }}</td>
+                <td><a href="/delete_order/{{ cliente }}">Elimina</a></td>
+            </tr>
+            {% endfor %}
+        </table>
 
+        <div class="valor-totale">Valore totale venduto: {{ valore_totale_venduto }} €</div>
+    </div>
 </body>
 </html>
