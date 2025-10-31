@@ -3,7 +3,7 @@ import sqlite3
 from datetime import datetime
 
 app = Flask(__name__)
-ordini = {}  # memorizza gli ordini in memoria
+ordini_memoria = {}  # memorizza gli ordini in memoria
 
 # --- Helper DB ---
 def get_db_connection():
@@ -150,7 +150,7 @@ def crea_ordine():
     conn.commit()
     prodotti_selezionati = [p[0] for p in prodotti_ordine]  # id dei prodotti
     quantita_ordini = [p[1] for p in prodotti_ordine]       # quantità dei prodotti
-    ordini[cliente_nome] = {'prodotti': prodotti_selezionati, 'quantita': quantita_ordini}
+    ordini_memoria[cliente_nome] = {'prodotti': prodotti_selezionati, 'quantita': quantita_ordini}
 
 
     # Recupera i dettagli dell'ordine appena creato
