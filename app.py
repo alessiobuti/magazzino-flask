@@ -147,8 +147,25 @@ def crea_ordine():
         conn.execute("UPDATE Prodotti SET quantita_pieni = quantita_pieni - ? WHERE id=?", (quantita, prod_id))
 
     conn.commit()
+
+    # Recupera i dettagli dell'ordine appena creato
+    ordine_info = conn.execute("""
+        SELECT o.id, c.nome AS cliente, o.data, o.totale
+        FROM Ordini o
+        JOIN Clienti c ON o.cliente_id = c.id
+        WHERE o.id = ?
+    """, (ordine_id,)).fetchone()
+
+    dettagli = conn.execute("""
+        SELECT p.nome, d.quantita, d.prezzo_unitario
+        FROM DettaglioOrdini d
+        JOIN Prodotti p ON d.prodotto_id = p.id
+        WHERE d.ordine_id = ?
+    """, (ordine_id,)).fetchall()
+
     conn.close()
-    return redirect('/ordini')
+
+    return render_template('ordine_confermato.html', ordine=ordine_info, dettagli=dettagli)
 
 # --- Report vendite ---
 @app.route('/report')

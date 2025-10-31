@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ordine Confermato</title>
+</head>
+<body>
+<h1>Ordine Confermato</h1>
+
+<p><strong>Cliente:</strong> {{ ordine.cliente }}</p>
+<p><strong>Data:</strong> {{ ordine.data }}</p>
+<p><strong>Totale:</strong> {{ ordine.totale }} €</p>
+
+<h2>Dettaglio Prodotti</h2>
+<table border="1">
+    <tr>
+        <th>Prodotto</th>
+        <th>Quantità</th>
+        <th>Prezzo Unitario</th>
+    </tr>
+    {% for d in dettagli %}
+    <tr>
+        <td>{{ d.nome }}</td>
+        <td>{{ d.quantita }}</td>
+        <td>{{ d.prezzo_unitario }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<a href="/ordini">Torna agli ordini</a> | <a href="/">Torna all'inventario</a>
+</body>
+</html>
