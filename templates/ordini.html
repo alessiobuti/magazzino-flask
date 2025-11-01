@@ -1,79 +1,53 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <title>Gestione Ordini</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light p-4">
+<h2>Nuovo Ordine</h2>
+<form method="POST" action="/crea_ordine">
+  <label>Cliente:</label>
+  <input type="text" name="cliente" required>
 
-<div class="container">
+  <table border="1" cellpadding="5">
+    <tr><th>Prodotto</th><th>Disponibili</th><th>Quantità</th><th>Prezzo (€)</th></tr>
+    {% for prod in prodotti %}
+    <tr>
+      <td>{{ prod.nome }}</td>
+      <td>{{ prod.quantita_pieni }}</td>
+      <td><input type="number" name="prod_{{ prod.id }}" value="0" min="0"></td>
+      <td>
+        <input type="hidden" name="prezzo_{{ prod.id }}" value="{{ prod.prezzo }}">
+        {{ prod.prezzo }}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
 
-    <h2 class="mb-4 text-center">Nuovo Ordine</h2>
+  <button type="submit">Crea Ordine</button>
+  <a href="/">Torna all'inventario</a>
+</form>
 
-    <form action="/crea_ordine" method="POST" class="card shadow-sm p-4 mb-5">
-        <div class="mb-3">
-            <label for="cliente" class="form-label fw-bold">Cliente:</label>
-            <input type="text" id="cliente" name="cliente" class="form-control" placeholder="Nome cliente" required>
-        </div>
+<hr>
 
-        <h5 class="mt-4">Prodotti disponibili</h5>
-        <table class="table table-striped align-middle">
-            <thead class="table-dark">
-                <tr>
-                    <th>Prodotto</th>
-                    <th>Disponibili</th>
-                    <th>Quantità</th>
-                    <th>Prezzo (€)</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for prod in prodotti %}
-                <tr>
-                    <td>{{ prod.nome }}</td>
-                    <td>{{ prod.quantita_pieni }}</td>
-                    <td>
-                        <input type="number" name="prod_{{ prod.id }}" min="0" value="0" class="form-control form-control-sm">
-                    </td>
-                    <td>
-                        <input type="number" name="prezzo_{{ prod.id }}" step="0.01" min="0" class="form-control form-control-sm">
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<h2>📦 Ordini recenti</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 15px;">
+  {% for ordine in ordini %}
+  <div style="border: 2px solid #ccc; border-radius: 12px; padding: 10px; width: 320px; background: {% if ordine.consegnato %}#d4edda{% else %}#fff3cd{% endif %}; box-shadow: 2px 2px 8px rgba(0,0,0,0.1);">
+    <strong>Cliente:</strong> {{ ordine.cliente }}<br>
+    <strong>Data:</strong> {{ ordine.data }}<br>
+    <strong>Totale:</strong> {{ ordine.totale }} €<br>
+    <strong>Stato:</strong> {% if ordine.consegnato %}✅ Consegnato{% else %}⏳ In attesa{% endif %}
 
-        <div class="text-end">
-            <button type="submit" class="btn btn-success">Crea Ordine</button>
-            <a href="/" class="btn btn-secondary">Torna all'inventario</a>
-        </div>
+    <ul>
+      {% for item in dettagli[ordine.id] %}
+        <li>{{ item.nome }} — {{ item.quantita }} × {{ item.prezzo_unitario }}€</li>
+      {% endfor %}
+    </ul>
+
+    {% if not ordine.consegnato %}
+    <form action="/consegna_ordine/{{ ordine.id }}" method="POST" style="display:inline;">
+      <button type="submit" style="background:none; border:none; cursor:pointer;">✅ Segna come consegnato</button>
+    </form> |
+    {% endif %}
+
+    <form action="/elimina_ordine/{{ ordine.id }}" method="POST" style="display:inline;">
+      <button type="submit" style="color:red; background:none; border:none; cursor:pointer;">🗑️ Elimina</button>
     </form>
-
-    <h3 class="mb-3 text-center">Ordini Recenti</h3>
-    <div class="row">
-        {% for ordine in ordini %}
-        <div class="col-md-6 mb-4">
-            <div class="card border-primary shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">{{ ordine.cliente }}</h5>
-                    <h6 class="card-subtitle text-muted mb-2">{{ ordine.data }}</h6>
-                    <p class="fw-bold">Totale: {{ ordine.totale }} €</p>
-                    <ul class="list-group list-group-flush">
-                        {% for item in dettagli[ordine.id] %}
-                        <li class="list-group-item d-flex justify-content-between">
-                            <span>{{ item.nome }} (x{{ item.quantita }})</span>
-                            <span>{{ item.prezzo_unitario }} €</span>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-        </div>
-        {% else %}
-        <p class="text-center text-muted">Nessun ordine recente.</p>
-        {% endfor %}
-    </div>
+  </div>
+  {% endfor %}
 </div>
-
-</body>
-</html>

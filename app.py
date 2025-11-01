@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 from datetime import datetime
 
@@ -31,13 +31,14 @@ def init_db():
             nome TEXT UNIQUE
         )
     ''')
-    # Ordini
+    # Ordini (con nuova colonna stato)
     conn.execute('''
         CREATE TABLE IF NOT EXISTS Ordini (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             cliente_id INTEGER,
             data TEXT,
             totale REAL,
+            stato TEXT DEFAULT 'in sospeso',
             FOREIGN KEY(cliente_id) REFERENCES Clienti(id)
         )
     ''')
@@ -107,12 +108,13 @@ def elimina_prodotto(prod_id):
 @app.route('/ordini')
 def ordini():
     conn = get_db_connection()
-    prodotti = conn.execute("SELECT * FROM Prodotti WHERE quantita_pieni>0").fetchall()
+    # ✅ mostra anche i prodotti con quantità 0 o negativa
+    prodotti = conn.execute("SELECT * FROM Prodotti").fetchall()
     clienti = conn.execute("SELECT * FROM Clienti").fetchall()
 
     # Recupera gli ordini già creati con dettagli
     ordini_list = conn.execute("""
-        SELECT o.id, c.nome AS cliente, o.data, o.totale
+        SELECT o.id, c.nome AS cliente, o.data, o.totale, o.stato
         FROM Ordini o
         JOIN Clienti c ON o.cliente_id = c.id
         ORDER BY o.id DESC
@@ -158,7 +160,7 @@ def crea_ordine():
         return redirect('/ordini')
 
     data = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    conn.execute("INSERT INTO Ordini (cliente_id, data, totale) VALUES (?, ?, ?)",
+    conn.execute("INSERT INTO Ordini (cliente_id, data, totale, stato) VALUES (?, ?, ?, 'in sospeso')",
                  (cliente_id, data, totale))
     ordine_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
 
@@ -169,29 +171,38 @@ def crea_ordine():
         conn.execute("UPDATE Prodotti SET quantita_pieni = quantita_pieni - ? WHERE id=?", (quantita, prod_id))
 
     conn.commit()
-    prodotti_selezionati = [p[0] for p in prodotti_ordine]  # id dei prodotti
-    quantita_ordini = [p[1] for p in prodotti_ordine]       # quantità dei prodotti
-    ordini_memoria[cliente_nome] = {'prodotti': prodotti_selezionati, 'quantita': quantita_ordini}
-
-
-    # Recupera i dettagli dell'ordine appena creato
-    ordine_info = conn.execute("""
-        SELECT o.id, c.nome AS cliente, o.data, o.totale
-        FROM Ordini o
-        JOIN Clienti c ON o.cliente_id = c.id
-        WHERE o.id = ?
-    """, (ordine_id,)).fetchone()
-
-    dettagli = conn.execute("""
-        SELECT p.nome, d.quantita, d.prezzo_unitario
-        FROM DettaglioOrdini d
-        JOIN Prodotti p ON d.prodotto_id = p.id
-        WHERE d.ordine_id = ?
-    """, (ordine_id,)).fetchall()
-
     conn.close()
 
-    return render_template('ordine_confermato.html', ordine=ordine_info, dettagli=dettagli)
+    return redirect('/ordini')
+
+# ✅ --- Elimina ordine e ripristina inventario ---
+@app.route('/elimina_ordine/<int:ordine_id>', methods=['POST'])
+def elimina_ordine(ordine_id):
+    conn = get_db_connection()
+
+    # recupera i dettagli dell'ordine
+    dettagli = conn.execute("SELECT prodotto_id, quantita FROM DettaglioOrdini WHERE ordine_id=?", (ordine_id,)).fetchall()
+
+    # restituisce le quantità in inventario
+    for d in dettagli:
+        conn.execute("UPDATE Prodotti SET quantita_pieni = quantita_pieni + ? WHERE id=?", (d['quantita'], d['prodotto_id']))
+
+    # elimina l'ordine e i suoi dettagli
+    conn.execute("DELETE FROM DettaglioOrdini WHERE ordine_id=?", (ordine_id,))
+    conn.execute("DELETE FROM Ordini WHERE id=?", (ordine_id,))
+    conn.commit()
+    conn.close()
+
+    return redirect('/ordini')
+
+# ✅ --- Segna ordine come consegnato ---
+@app.route('/consegna_ordine/<int:ordine_id>', methods=['POST'])
+def consegna_ordine(ordine_id):
+    conn = get_db_connection()
+    conn.execute("UPDATE Ordini SET stato='consegnato' WHERE id=?", (ordine_id,))
+    conn.commit()
+    conn.close()
+    return redirect('/ordini')
 
 # --- Report vendite ---
 @app.route('/report')
