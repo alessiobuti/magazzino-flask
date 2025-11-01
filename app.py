@@ -3,6 +3,8 @@ import sqlite3
 from datetime import datetime
 
 app = Flask(__name__)
+app.debug = True
+
 ordini_memoria = {}  # memorizza gli ordini in memoria
 
 # --- Helper DB ---
